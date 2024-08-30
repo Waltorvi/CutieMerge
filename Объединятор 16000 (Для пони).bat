@@ -46,7 +46,7 @@ echo.
 goto :eof
 
 :after_selection
-:: Устанавливаем имя выходного файла (изменим расширение на mkv)
+:: Устанавливаем имя выходного файла (меняем расширение на mkv)
 for %%f in ("%video_file%") do (
     set "base_name=%%~nf"
 )
@@ -54,9 +54,9 @@ set "output_file=%base_name%_SEURKA.mkv"
 
 :: Вывод информации о выбранных файлах и запрос подтверждения
 echo.
-echo Комитет дружбы избрал для слияния:
+echo Выбранные файлы:
 :: Видео
-echo Дружелюбная панорама: %video_file%
+echo Видео: %video_file%
 :: Аудио
 echo Аудио: %audio_file%
 :: Субтитры
@@ -64,22 +64,34 @@ echo Субтитры: %subtitle_file%
 :: Выходной файл
 echo Выходной файл: %output_file%
 echo.
-set /p confirm="Подтвердите склеивание этих файлов (Вы точно уверены, что согласны с поникомитетои дружбы, что хотите слиять эти магические корзинки (да, уверен на 100% и понимаю, что операцию не отменить, а исходные файлы будут удалены/отказ[n]): "
-if /i "%confirm%"=="n" (
+set /p confirm="Подтвердите склеивание этих файлов (Да/Нет) [y/n]: "
+if /i "%confirm%" neq "y" (
     echo Операция отменена пользователем.
     pause
     exit /b 0
 )
 
-:: Объединяем видео, аудио и субтитры
+:: Объединяем видео, аудио и (при наличии) субтитры
 echo.
 echo Начинаем склеивание файлов...
-"%FFMPEG_PATH%\ffmpeg" -i "%video_file%" -i "%audio_file%" -i "%subtitle_file%" -c:v copy -c:a libvorbis -c:s copy -map 0:v -map 1:a -map 2 -y "%output_file%"
+
+if defined subtitle_file (
+    "%FFMPEG_PATH%\ffmpeg" -i "%video_file%" -i "%audio_file%" -i "%subtitle_file%" -c:v copy -c:a libvorbis -c:s copy -map 0:v -map 1:a -map 2 -y "%output_file%"
+) else (
+    "%FFMPEG_PATH%\ffmpeg" -i "%video_file%" -i "%audio_file%" -c:v copy -c:a libvorbis -y "%output_file%"
+)
 
 if %errorlevel% neq 0 (
     echo Произошла ошибка при объединении файлов.
-) else (
-    echo Файлы успешно объединены.
+    pause
+    exit /b 1
+)
+
+echo Файлы успешно объединены.
+
+:: Запрос на удаление исходных файлов
+set /p delete_files="Удалить исходные файлы после склеивания? [y/n]: "
+if /i "%delete_files%"=="y" (
     echo Удаление исходных файлов...
     del "%video_file%" "%audio_file%" "%subtitle_file%"
     if %errorlevel% neq 0 (
@@ -87,6 +99,8 @@ if %errorlevel% neq 0 (
     ) else (
         echo Исходные файлы удалены.
     )
+) else (
+    echo Исходные файлы сохранены.
 )
 
 pause
