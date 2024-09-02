@@ -1,25 +1,72 @@
+import os
+import sys
+import time
 from api_handler import APIHandler
 from video_processor import VideoProcessor
+from utils import display_menu, pony_log, confirm_choice
+
 
 def main():
-    base_url = "https://example.com"  # Указать url
-    episode_name = input("Введите название эпизода: ")
+    # Стилизация и приветствие
+    os.system('cls' if os.name == 'nt' else 'clear')
+    # Чатгпт неправильно сгенерил лого, найди нормальный сервис
+    print("""
+    ██████╗ ██╗   ██╗ ██████╗████████╗██╗███████╗███╗   ███╗███████╗██████╗  ██████╗ ███████╗
+    ██╔══██╗██║   ██║██╔════╝╚══██╔══╝██║██╔════╝████╗ ████║██╔════╝██╔══██╗██╔════╝ ██╔════╝
+    ██████╔╝██║   ██║██║        ██║   ██║███████╗██╔████╔██║█████╗  ██████╔╝██║  ███╗█████╗  
+    ██╔═══╝ ██║   ██║██║        ██║   ██║╚════██║██║╚██╔╝██║██╔══╝  ██╔══██╗██║   ██║██╔══╝  
+    ██║     ╚██████╔╝╚██████╗   ██║   ██║███████║██║ ╚═╝ ██║███████╗██║  ██║╚██████╔╝███████╗
+    ╚═╝      ╚═════╝  ╚═════╝   ╚═╝   ╚═╝╚══════╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+    """)
+    print("Made by Waltorvi\n")
 
+    base_url = "https://example.com"  # Укажи актуальный URL API
     api_handler = APIHandler(base_url)
-    video_processor = VideoProcessor()
 
-    try:
-        episode_data = api_handler.get_episode_data(episode_name)
-        video_url = episode_data['video_url']
-        audio_url = episode_data['audio_url']
-        subtitles_url = episode_data['subtitles_url']
+    # Шаг 2: Выбор сезона
+    seasons = api_handler.get_seasons()
+    season_choice = display_menu("Выберите сезон:", seasons)
 
-        output_file = f"{episode_name}.mp4"
-        video_processor.merge_video(video_url, audio_url, subtitles_url, output_file)
-        print(f"Видео успешно собрано и сохранено как {output_file}")
+    # Шаг 3: Выбор серии
+    episodes = api_handler.get_episodes(season_choice)
+    episode_choice = display_menu(f"Сезон {season_choice}:", episodes)
 
-    except Exception as e:
-        print(f"Произошла ошибка: {e}")
+    # Шаг 4: Выбор качества видео
+    qualities = api_handler.get_video_qualities(episode_choice)
+    quality_choice = display_menu("Выберите качество видео:", qualities)
+
+    # Шаг 5: Выбор озвучки
+    audios = api_handler.get_audio_tracks(episode_choice)
+    audio_choice = display_menu("Выберите озвучку:", audios)
+
+    # Шаг 6: Выбор субтитров
+    subtitles = api_handler.get_subtitles(episode_choice)
+    subtitle_choice = display_menu("Выберите субтитры:", subtitles)
+
+    # Шаг 7: Подтверждение выбора
+    final_choice = confirm_choice({
+        "Сезон": season_choice,
+        "Серия": episode_choice,
+        "Качество": quality_choice,
+        "Озвучка": audio_choice,
+        "Субтитры": subtitle_choice
+    })
+
+    if final_choice:
+        # Шаг 8: Загрузка и сборка видео
+        pony_log("Начинается загрузка и сборка видео...")
+        video_processor = VideoProcessor()
+        video_processor.process_video(
+            episode_choice,
+            quality_choice,
+            audio_choice,
+            subtitle_choice
+        )
+        pony_log("Видео успешно собрано!", style="success")
+    else:
+        pony_log("Выбор отменён, программа завершена.", style="error")
+
 
 if __name__ == "__main__":
     main()
+
