@@ -19,8 +19,16 @@ class EpisodeSelector:
             logging.error(f"Не удалось получить список эпизодов для сезона {season}.")
             return
 
+        # Получение названия сезона
+        season_title_ru = None
+        season_title_en = None
+        for episode in episodes:
+            for translation in episode['category']['translations']:
+                if translation['locale'] == 'en':
+                        season_title = translation['subtitle']
+
         # Вывод списка эпизодов
-        print(f"\nСезон {season}:")
+        print(f"\nСезон {season} // {season_title}:")
         for i, episode in enumerate(episodes):
             english_title = None
             for translation in episode.get('translations', []):
@@ -57,12 +65,26 @@ class EpisodeSelector:
             logging.error(f"Не удалось получить информацию о серии {english_title}.")
             return None
 
-        # Вывод доступных качеств видео
-        print("\nДоступные качества видео:")
-        for i, quality in enumerate(episode_extras['videos']):
-            print(f"{i + 1}. {quality}p")
+        # Выбор качества видео
+        print("\nДоступное качество видео:")
+        quality_labels = {
+            "2160": "[4K]",
+            "1440": "[2K]",
+            "1080": "[Full HD]",
+            "720": "[HD]"
+        }
+        sorted_qualities = sorted(episode_extras['videos'], key=lambda x: int(x), reverse=True)
+        for i, quality in enumerate(sorted_qualities):
+            label = quality_labels.get(quality, "")
+            print(f"{i + 1}. {label} {quality}p")
 
-        # Вывод доступных озвучек
+        selected_quality_index = int(input("Выберите качество видео (номер): ")) - 1
+        while selected_quality_index < 0 or selected_quality_index >= len(sorted_qualities):
+            print("Неверный номер качества видео.")
+            selected_quality_index = int(input("Выберите качество видео (порядковый номер): ")) - 1
+        selected_quality = sorted_qualities[selected_quality_index]
+
+        # Выбор озвучки
         print("\nДоступные озвучки:")
         # Оригинал первым
         original_dub = None
@@ -71,30 +93,14 @@ class EpisodeSelector:
                 original_dub = dub
                 break
         if original_dub:
-            print(f"1. {original_dub['name']}")
-            other_dubs = sorted([dub for dub in episode_extras['dubs'] if dub['name'] != 'Original'],
-                                key=lambda x: x['name'])
-            for i, dub in enumerate(other_dubs):
-                print(f"{i + 2}. {dub['name']}")
-        else:
-            other_dubs = sorted(episode_extras['dubs'], key=lambda x: x['name'])
-            for i, dub in enumerate(other_dubs):
-                print(f"{i + 1}. {dub['name']}")
+            print(f"1. [{original_dub['lang']}] {original_dub['name']}")
 
-        print("\nДоступные субтитры:")
-        print("1. Без субтитров")
-        other_subs = sorted(episode_extras['subs'], key=lambda x: x['name'])
-        for i, sub in enumerate(other_subs):
-            print(f"{i + 2}. {sub['name']}")
+        # Остальные озвучки в алфавитном порядке
+        other_dubs = sorted([dub for dub in episode_extras['dubs'] if dub['name'] != 'Original'],
+                            key=lambda x: x['name'])
+        for i, dub in enumerate(other_dubs):
+            print(f"{i + 2}. [{dub['lang']}] {dub['name']}")
 
-        # Выбор качества видео
-        selected_quality_index = int(input("Выберите качество видео (номер): ")) - 1
-        while selected_quality_index < 0 or selected_quality_index >= len(episode_extras['videos']):
-            print("Неверный номер качества видео.")
-            selected_quality_index = int(input("Выберите качество видео (номер): ")) - 1
-        selected_quality = episode_extras['videos'][selected_quality_index]
-
-        # Выбор озвучки
         selected_dub_index = int(input("Выберите озвучку (номер): ")) - 1
         if original_dub:
             if selected_dub_index == 0:
@@ -112,6 +118,15 @@ class EpisodeSelector:
                 return None
 
         # Выбор субтитров
+        print("\nДоступные субтитры:")
+        print("1. Без субтитров")
+
+
+        # Остальные субтитры в алфавитном порядке
+        other_subs = sorted(episode_extras['subs'], key=lambda x: x['name'])
+        for i, sub in enumerate(other_subs):
+            print(f"{i + 2}. [{sub['lang']}] {sub['name']}")
+
         selected_subs_index = int(input("Выберите субтитры (номер): ")) - 1
         if selected_subs_index == 0:
             selected_subs = None  # Без субтитров
