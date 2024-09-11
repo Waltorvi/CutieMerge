@@ -6,6 +6,7 @@ import shutil
 DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
 TEMP_DIR = os.path.join(DOWNLOADS_DIR, ".temp")
 
+
 def merge_video_audio_subs(video_filename, audio_filename, subs_filename=None, output_filename="output.mkv"):
     """
     Объединяет видео, аудио и субтитры (опционально) с помощью ffmpeg.
@@ -21,16 +22,20 @@ def merge_video_audio_subs(video_filename, audio_filename, subs_filename=None, o
             "ffmpeg",
             "-i", video_filename,
             "-i", audio_filename,
-            "-c:v", "copy",  # Копирование видео без перекодирования
-            "-c:a", "copy",  # Копирование аудио без перекодирования
-            "-map", "0:v",
-            "-map", "1:a",
         ]
 
         if subs_filename:
-            command.extend([
-                "-vf", f"subtitles='{subs_filename}'"
-            ])
+            command.extend(["-i", subs_filename])
+
+        command.extend([
+            "-c:v", "copy",
+            "-c:a", "copy",
+            "-map", "0:v",
+            "-map", "1:a",
+        ])
+
+        if subs_filename:
+            command.extend(["-c:s", "copy", "-map", "2:s"])
 
         command.append(output_filename)
 
@@ -42,6 +47,7 @@ def merge_video_audio_subs(video_filename, audio_filename, subs_filename=None, o
     except subprocess.CalledProcessError as e:
         logging.error(f"Ошибка при объединении видео: {e}")
         return False
+
 
 def cleanup_temp_files():
     """
