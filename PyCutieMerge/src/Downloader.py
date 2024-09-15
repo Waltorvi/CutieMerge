@@ -3,14 +3,16 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
+from time import sleep
 
-DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
-TEMP_DIR = os.path.join(DOWNLOADS_DIR, ".temp")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMP_DIR = os.path.join(SCRIPT_DIR, ".temp")
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "CutieMerge")
 
 BASE_URL = "https://база.магиядружбы.рф/"
 
 
-def DownloadFile(url, filename, num_threads=8):
+def DownloadFile(url, filename, max_retries=3, num_threads=6):
     """
     Скачивает файл по заданному URL и сохраняет его с указанным именем,
     используя многопоточную загрузку.
@@ -34,15 +36,25 @@ def DownloadFile(url, filename, num_threads=8):
                 futures = []
                 t = tqdm(total=file_size, unit='iB', unit_scale=True, desc=filename)
 
-                def download_chunk(start, end):
-                    headers = {'Range': f'bytes={start}-{end}'}
-                    response = session.get(url, headers=headers, stream=True)
-                    response.raise_for_status()
-                    for data in response.iter_content(chunk_size=1024):
-                        t.update(len(data))
-                        f.seek(start)
-                        f.write(data)
-                        start += len(data)
+                def download_chunk(start, end, retry_count=0):
+                    try:
+                        headers = {'Range': f'bytes={start}-{end}'}
+                        response = session.get(url, headers=headers, stream=True)
+                        response.raise_for_status()
+                        for data in response.iter_content(chunk_size=1024):
+                            t.update(len(data))
+                            f.seek(start)
+                            f.write(data)
+                            start += len(data)
+                    except requests.exceptions.RequestException as e:
+                        logging.warning(f"Ошибка при загрузке фрагмента: {e}")
+                        if retry_count < max_retries:
+                            logging.info(f"Повторная попытка загрузки фрагмента (попытка {retry_count + 1})...")
+                            sleep(1)  # Пауза перед повторной попыткой
+                            download_chunk(start, end, retry_count + 1)
+                        else:
+                            logging.error(f"Не удалось загрузить фрагмент после {max_retries} попыток.")
+                            raise  # Передать исключение дальше
 
                 for start, end in chunks:
                     futures.append(executor.submit(download_chunk, start, end))
