@@ -20,8 +20,6 @@ class EpisodeSelector:
             return
 
         # Получение названия сезона
-        season_title_ru = None
-        season_title_en = None
         for episode in episodes:
             for translation in episode['category']['translations']:
                 if translation['locale'] == 'en':
@@ -121,8 +119,6 @@ class EpisodeSelector:
         print("\nДоступные субтитры:")
         print("1. Без субтитров")
 
-
-        # Остальные субтитры в алфавитном порядке
         other_subs = sorted(episode_extras['subs'], key=lambda x: x['name'])
         for i, sub in enumerate(other_subs):
             print(f"{i + 2}. [{sub['lang']}] {sub['name']}")
