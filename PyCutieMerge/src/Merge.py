@@ -3,8 +3,9 @@ import logging
 import os
 import shutil
 
-DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
-TEMP_DIR = os.path.join(DOWNLOADS_DIR, ".temp")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMP_DIR = os.path.join(SCRIPT_DIR, ".temp")
+OUTPUT_DIR = os.path.join(SCRIPT_DIR, "CutieMerge")
 
 
 def merge_video_audio_subs(video_filename, audio_filename, subs_filename=None, output_filename="output.mkv"):
