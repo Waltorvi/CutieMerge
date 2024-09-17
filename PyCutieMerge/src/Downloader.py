@@ -79,16 +79,19 @@ def download_video(season, episode, quality):
         ext = "webm"
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{quality}.{ext}"
     filename = os.path.join(TEMP_DIR, f"video.{ext}")
+    logging.info("Скачивание видео")
     return DownloadFile(url, filename)
 
 
 def download_audio(season, episode, dub_code):
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{dub_code}.opus"
     filename = os.path.join(TEMP_DIR, "audio.opus")
+    logging.info("Скачивание аудио")
     return DownloadFile(url, filename)
 
 
 def download_subs(season, episode, subs_code):
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{subs_code}.ass"
     filename = os.path.join(TEMP_DIR, "subs.ass")
+    logging.info("Скачивание субтитров")
     return DownloadFile(url, filename)
