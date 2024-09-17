@@ -1,0 +1,13 @@
+requests: Для отправки HTTP-запросов к API.
+logging: Для логирования событий и ошибок.
+os: Для работы с файловой системой (создание папок, получение путей и т.д.).
+sys: Для доступа к стандартному выводу (консоль).
+shutil: Для удаления папок.
+subprocess: Для запуска внешних процессов (в данном случае, ffmpeg).
+pathlib: Для работы с путями к файлам и папкам.
+colorama: Для раскрашивания вывода в консоли.
+concurrent.futures: Для многопоточной загрузки файлов.
+tqdm: Для отображения прогресс-бара при загрузке файлов.
+time: Для использования функции sleep().
+
+pip install requests logging os sys shutil subprocess pathlib colorama concurrent.futures tqdm time
