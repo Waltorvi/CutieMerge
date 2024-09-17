@@ -1,4 +1,5 @@
 import logging
+from colorama import init, Fore, Style
 
 class EpisodeSelector:
     def __init__(self, api):
@@ -6,16 +7,15 @@ class EpisodeSelector:
 
     def select_episode(self):
         # Выбор сезона
-        season = int(input("Введите номер сезона (1-9): "))
+        season = int(input(Fore.WHITE + "Введите номер сезона (1-9): " + Style.RESET_ALL))
         while season < 1 or season > 9:
             print("Неверный номер сезона.")
-            season = int(input("Введите номер сезона (1-9): "))
+            season = int(input(Fore.WHITE + "Введите номер сезона (1-9): " + Style.RESET_ALL))
 
         # Получение списка эпизодов
         episodes = self.api.get_episodes(season)
 
         if not episodes:
-            print(f"Ошибка: Не удалось получить список эпизодов для сезона {season}.")
             logging.error(f"Не удалось получить список эпизодов для сезона {season}.")
             return
 
@@ -36,10 +36,10 @@ class EpisodeSelector:
             print(f"{i + 1}. {episode['title']} - {english_title}")
 
         # Выбор эпизода
-        episode_number = int(input("Введите номер эпизода: "))
+        episode_number = int(input(Fore.WHITE + "Введите номер эпизода: " + Style.RESET_ALL))
         while episode_number < 1 or episode_number > len(episodes):
             print("Неверный номер эпизода.")
-            episode_number = int(input("Введите номер эпизода: "))
+            episode_number = int(input(Fore.WHITE + "Введите номер эпизода': " + Style.RESET_ALL))
 
         selected_episode = episodes[episode_number - 1]
         english_title = None
@@ -50,7 +50,6 @@ class EpisodeSelector:
 
         if not english_title:
             logging.error(f"Не удалось найти английское название для эпизода {selected_episode['title']}")
-            print("Английское название не найдено.")
             return None
 
         logging.info(f"Выбран эпизод: {selected_episode['title']} ({english_title})")
@@ -59,12 +58,11 @@ class EpisodeSelector:
         episode_extras = self.api.get_episode_extras(english_title)
 
         if not episode_extras:
-            print(f"Ошибка: Не удалось получить информацию о серии {english_title}.")
             logging.error(f"Не удалось получить информацию о серии {english_title}.")
             return None
 
         # Выбор качества видео
-        print("\nДоступное качество видео:")
+        print(Fore.WHITE + "\nДоступное качество видео:" + Style.RESET_ALL)
         quality_labels = {
             "2160": "[4K]",
             "1440": "[2K]",
@@ -83,7 +81,7 @@ class EpisodeSelector:
         selected_quality = sorted_qualities[selected_quality_index]
 
         # Выбор озвучки
-        print("\nДоступные озвучки:")
+        print(Fore.WHITE + "\nДоступные озвучки:" + Style.RESET_ALL)
         # Оригинал первым
         original_dub = None
         for dub in episode_extras['dubs']:
@@ -116,7 +114,7 @@ class EpisodeSelector:
                 return None
 
         # Выбор субтитров
-        print("\nДоступные субтитры:")
+        print(Fore.WHITE + "\nДоступные субтитры:" + Style.RESET_ALL)
         print("1. Без субтитров")
 
         other_subs = sorted(episode_extras['subs'], key=lambda x: x['name'])
@@ -140,7 +138,7 @@ class EpisodeSelector:
         print(f"- Озвучка: {selected_dub['name']}")
         print(f"- Субтитры: {selected_subs['name'] if selected_subs else 'Без субтитров'}")
 
-        confirm = input("Подтвердить выбор? (да/нет): ")
+        confirm = input(Fore.WHITE + "Подтвердить выбор? (да/нет): " + Style.RESET_ALL)
         if confirm.lower() != "да":
             print("Выбор отменен.")
             return None
