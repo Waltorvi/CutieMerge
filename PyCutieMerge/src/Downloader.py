@@ -12,7 +12,7 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "CutieMerge")
 BASE_URL = "https://база.магиядружбы.рф/"
 
 
-def DownloadFile(url, filename, max_retries=3, num_threads=6):
+def DownloadFile(url, filename, max_retries=3, num_threads=8):
     """
     Скачивает файл по заданному URL и сохраняет его с указанным именем,
     используя многопоточную загрузку.
