@@ -36,10 +36,10 @@ class EpisodeSelector:
             print(f"{i + 1}. {episode['title']} - {english_title}")
 
         # Выбор эпизода
-        episode_number = int(input(Fore.WHITE + "Введите номер эпизода: " + Style.RESET_ALL))
+        episode_number = int(input(Fore.GREEN + "Введите номер эпизода: " + Style.RESET_ALL))
         while episode_number < 1 or episode_number > len(episodes):
             print("Неверный номер эпизода.")
-            episode_number = int(input(Fore.WHITE + "Введите номер эпизода': " + Style.RESET_ALL))
+            episode_number = int(input(Fore.GREEN + "Введите номер эпизода': " + Style.RESET_ALL))
 
         selected_episode = episodes[episode_number - 1]
         english_title = None
@@ -74,10 +74,10 @@ class EpisodeSelector:
             label = quality_labels.get(quality, "")
             print(f"{i + 1}. {label} {quality}p")
 
-        selected_quality_index = int(input("Выберите качество видео (номер): ")) - 1
+        selected_quality_index = int(input(Fore.GREEN + "Выберите качество видео (номер): " + Style.RESET_ALL)) - 1
         while selected_quality_index < 0 or selected_quality_index >= len(sorted_qualities):
             print("Неверный номер качества видео.")
-            selected_quality_index = int(input("Выберите качество видео (порядковый номер): ")) - 1
+            selected_quality_index = int(input(Fore.GREEN + "Выберите качество видео (порядковый номер): " + Style.RESET_ALL)) - 1
         selected_quality = sorted_qualities[selected_quality_index]
 
         # Выбор озвучки
@@ -97,7 +97,7 @@ class EpisodeSelector:
         for i, dub in enumerate(other_dubs):
             print(f"{i + 2}. [{dub['lang']}] {dub['name']}")
 
-        selected_dub_index = int(input("Выберите озвучку (номер): ")) - 1
+        selected_dub_index = int(input(Fore.GREEN + "Выберите озвучку (номер): " + Style.RESET_ALL)) - 1
         if original_dub:
             if selected_dub_index == 0:
                 selected_dub = original_dub
@@ -121,7 +121,7 @@ class EpisodeSelector:
         for i, sub in enumerate(other_subs):
             print(f"{i + 2}. [{sub['lang']}] {sub['name']}")
 
-        selected_subs_index = int(input("Выберите субтитры (номер): ")) - 1
+        selected_subs_index = int(input(Fore.GREEN + "Выберите субтитры (номер): " + Style.RESET_ALL)) - 1
         if selected_subs_index == 0:
             selected_subs = None  # Без субтитров
         elif 1 <= selected_subs_index <= len(other_subs):
@@ -138,7 +138,7 @@ class EpisodeSelector:
         print(f"- Озвучка: {selected_dub['name']}")
         print(f"- Субтитры: {selected_subs['name'] if selected_subs else 'Без субтитров'}")
 
-        confirm = input(Fore.WHITE + "Подтвердить выбор? (да/нет): " + Style.RESET_ALL)
+        confirm = input(Fore.GREEN + "Подтвердить выбор? (да/нет): " + Style.RESET_ALL)
         if confirm.lower() != "да":
             print("Выбор отменен.")
             return None
