@@ -5,6 +5,7 @@ import shutil
 import subprocess
 from pathlib import Path
 from colorama import init, Fore, Style
+from unicodedata import category
 
 from API_Handler import APIHandler
 from Downloader import download_video, download_audio, download_subs
@@ -57,9 +58,9 @@ def main():
         print(
             Fore.MAGENTA + "Сделано " + Fore.CYAN + "Waltorvi" + Fore.MAGENTA + " для " + Fore.WHITE + "МагияДружбы.рф" + Style.RESET_ALL)
 
-        api = APIHandler()
-
         ColoredConsoleHandler()
+
+        api = APIHandler()
 
         if not api.check_api_availability():
             input(Fore.RED + "Нажмите Enter для выхода..." + Style.RESET_ALL)
@@ -87,7 +88,7 @@ def main():
         video_filename = os.path.join(TEMP_DIR, "video.mp4") if int(selected_quality) <= 1080 else os.path.join(TEMP_DIR, "video.webm")
         audio_filename = os.path.join(TEMP_DIR, "audio.opus")
         subs_filename = os.path.join(TEMP_DIR, "subs.ass") if selected_subs else None
-        output_filename = os.path.join(OUTPUT_DIR, f"{selected_episode['title']}.mkv")
+        output_filename = os.path.join(OUTPUT_DIR, f"[{selected_episode['categoryId']}] " + f"{selected_episode['localId']} " + f"{selected_episode['title']}.mkv")
 
         if not merge_video_audio_subs(video_filename, audio_filename, subs_filename, output_filename):
             print(Fore.RED + "Ошибка при объединении видео." + Style.RESET_ALL)
@@ -95,8 +96,8 @@ def main():
 
         cleanup_temp_files()
 
-        print(Fore.MAGENTA + "\nСерия" + Fore.CYAN + f"{selected_episode['title']} успешно скачана и объединена!\n" + Fore.MAGENTA +
-                           "Ты можешь найти ее в директории загрузок" + Fore.BLUE + f"{OUTPUT_DIR}" + Style.RESET_ALL)
+        print(Fore.MAGENTA + "\nСерия " + Fore.CYAN + f"{selected_episode['title']}" + Fore.MAGENTA + " успешно скачана и объединена!\n" + Fore.MAGENTA +
+                           "Ты можешь найти ее в директории загрузок " + Fore.YELLOW + f"{OUTPUT_DIR}" + Style.RESET_ALL)
 
         os.startfile(OUTPUT_DIR)
 
