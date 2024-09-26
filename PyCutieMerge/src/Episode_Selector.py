@@ -1,5 +1,6 @@
 import logging
 from colorama import init, Fore, Style
+from Config import show_settings_menu
 
 class EpisodeSelector:
     def __init__(self, api):
@@ -7,10 +8,27 @@ class EpisodeSelector:
 
     def select_episode(self):
         # Выбор сезона
-        season = int(input(Fore.WHITE + "Введите номер сезона (1-9): " + Style.RESET_ALL))
+        season_input = input(Fore.WHITE + "Введите номер сезона (1-9): " + Style.RESET_ALL) # Ввод сохранен в переменную
+        if season_input == '/settings':
+            show_settings_menu()
+        else:
+            try:
+                season = int(season_input) # Преобразование в число только если это не команда
+            except ValueError:
+                print("Неверный ввод. Пожалуйста, введите число от 1 до 9.")
+                return None
+
         while season < 1 or season > 9:
             print("Неверный номер сезона.")
-            season = int(input(Fore.WHITE + "Введите номер сезона (1-9): " + Style.RESET_ALL))
+            season_input = input(Fore.WHITE + "Введите номер сезона (1-9): " + Style.RESET_ALL) # Ввод сохранен в переменную
+            if season_input == '/settings':
+                show_settings_menu()
+            else:
+                try:
+                    season = int(season_input) # Преобразование в число только если это не команда
+                except ValueError:
+                    print("Неверный ввод. Пожалуйста, введите число от 1 до 9.")
+                    return None
 
         # Получение списка эпизодов
         episodes = self.api.get_episodes(season)
@@ -36,10 +54,27 @@ class EpisodeSelector:
             print(f"{i + 1}. {episode['title']} - {english_title}")
 
         # Выбор эпизода
-        episode_number = int(input(Fore.GREEN + "Введите номер эпизода: " + Style.RESET_ALL))
+        episode_input = input(Fore.GREEN + "Введите номер эпизода: " + Style.RESET_ALL)  # Ввод сохранен в переменную
+        if episode_input == '/settings':
+            show_settings_menu()
+        else:
+            try:
+                episode_number = int(episode_input)  # Преобразование в число только если это не команда
+            except ValueError:
+                print("Неверный ввод. Пожалуйста, введите число.")
+                return None
+
         while episode_number < 1 or episode_number > len(episodes):
-            print("Неверный номер эпизода.")
-            episode_number = int(input(Fore.GREEN + "Введите номер эпизода': " + Style.RESET_ALL))
+            episode_input = input(
+                Fore.GREEN + "Введите номер эпизода: " + Style.RESET_ALL)  # Ввод сохранен в переменную
+            if episode_input == '/settings':
+                show_settings_menu()
+            else:
+                try:
+                    episode_number = int(episode_input)  # Преобразование в число только если это не команда
+                except ValueError:
+                    print("Неверный ввод. Пожалуйста, введите число.")
+                    return None
 
         selected_episode = episodes[episode_number - 1]
         english_title = None
