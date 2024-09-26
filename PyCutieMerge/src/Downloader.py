@@ -12,7 +12,7 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "CutieMerge")
 BASE_URL = "https://база.магиядружбы.рф/"
 
 
-def DownloadFile(url, filename, max_retries=3, num_threads=8):
+def DownloadFile(url, filename, max_retries=3, num_threads=4):
     """
     Скачивает файл по заданному URL и сохраняет его с указанным именем,
     используя многопоточную загрузку.
@@ -20,9 +20,14 @@ def DownloadFile(url, filename, max_retries=3, num_threads=8):
     Args:
         url (str): URL файла для скачивания.
         filename (str): Имя файла для сохранения.
-        num_threads (int, optional): Количество потоков для загрузки. Defaults to 8.
+        num_threads (int, optional): Количество потоков для загрузки. Defaults to 4.
     """
+
+    from Config import max_retries, num_threads
+
     try:
+        logging.info(f"Максимальное количество повторных попыток при ошибке загрузки: {max_retries}")
+        logging.info(f"Число потоков для скачивания: {num_threads}")
         with requests.Session() as session:
             response = session.head(url)
             response.raise_for_status()
