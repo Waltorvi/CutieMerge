@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+
 from colorama import init, Fore, Style
 import re
 
@@ -9,7 +10,6 @@ from API_Handler import APIHandler
 from Downloader import download_video, download_audio, download_subs
 from Merge import merge_video_audio_subs, cleanup_temp_files
 from Episode_Selector import EpisodeSelector
-from Config import show_settings_menu
 
 init()
 

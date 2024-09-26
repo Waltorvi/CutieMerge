@@ -1,13 +1,14 @@
 import configparser
 import os
 import logging
+import sys
 
 # Объявление глобальных переменных
 max_retries = 3
 num_threads = 4
 
 # Путь к файлу настроек
-config_file = os.path.join(os.path.dirname(__file__), 'config.ini')
+config_file = os.path.join(os.path.dirname(sys.executable), 'config.ini')
 
 # Создание объекта configparser
 config = configparser.ConfigParser()
@@ -16,12 +17,14 @@ config = configparser.ConfigParser()
 if os.path.exists(config_file):
     config.read(config_file)
 
+# Создание конфигурационного файла, если его нет
 if not os.path.exists(config_file):
     with open(config_file, 'w') as f:
         config.add_section('Downloader')
         config.set('Downloader', 'max_retries', '3')
         config.set('Downloader', 'num_threads', '4')
         config.write(f)
+    logging.info(f"Создан файл настроек: {config_file}")
 
 def show_settings_menu():
     """
@@ -36,6 +39,7 @@ def show_settings_menu():
     num_threads = config.getint('Downloader', 'num_threads', fallback=num_threads)
 
     while True:
+        logging.info(f"Конфигурационный файл: {config_file}")
         print("\nМеню настроек:")
         print(f"1. Максимальное количество попыток загрузки. Текущее значение: <{max_retries}>")
         print(f"2. Количество потоков загрузки. Текущее значение: <{num_threads}>")
