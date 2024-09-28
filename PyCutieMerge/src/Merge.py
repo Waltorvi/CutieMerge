@@ -30,7 +30,7 @@ def merge_video_audio_subs(video_filename, audio_filename, subs_filename=None, o
 
         command.extend([
             "-c:v", "copy",
-            "-c:a", "copy",
+            "-c:a", "libvorbis", # Конечные файлы имеют артефакты. Так как Batch скрипт работал стабильно, использую его параметры: vorbis вместо копирования
             "-map", "0:v",
             "-map", "1:a",
         ])
