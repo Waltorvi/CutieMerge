@@ -1,37 +1,18 @@
 import logging
 import os
-import sys
-from pathlib import Path
 
+from pathlib import Path
 from colorama import init, Fore, Style
-import re
 
 from API_Handler import APIHandler
-from Downloader import download_video, download_audio, download_subs
+from Downloader import download_video, download_audio, download_subs, sanitize_filename
+from ALTDownloader import download_video_alt, download_audio_alt, download_subs_alt
 from Merge import merge_video_audio_subs, cleanup_temp_files
 from Episode_Selector import EpisodeSelector
+from Config import config, output_folder
+from Logs import ColoredConsoleHandler
 
 init()
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[
-                        logging.StreamHandler(sys.stdout)  # Вывод логов в консоль
-                    ])
-
-class ColoredConsoleHandler(logging.StreamHandler):
-    def emit(self, record):
-        if record.levelno == logging.ERROR:
-            record.msg = Fore.RED + record.msg + Style.RESET_ALL
-        elif record.levelno == logging.INFO:
-            record.msg = Fore.YELLOW + record.msg + Style.RESET_ALL
-        super().emit(record)
-
-# Замена стандартного обработчика на раскрашенный
-for handler in logging.root.handlers[:]:
-    if isinstance(handler, logging.StreamHandler):
-        logging.root.removeHandler(handler)
-logging.getLogger().addHandler(ColoredConsoleHandler())
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DOWNLOADS_DIR = str(Path.home() / "Downloads")
@@ -42,25 +23,6 @@ if not os.path.exists(TEMP_DIR):
     os.makedirs(TEMP_DIR)
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
-
-def sanitize_filename(filename):
-    """
-    Удаляет недопустимые символы из имени файла.
-
-    Args:
-        filename (str): Имя файла.
-
-    Returns:
-        str: Очищенное имя файла.
-    """
-    invalid_chars = r'[\\/:*?"<>|]'  # Запрещенные символы в Windows
-    sanitized_filename = re.sub(invalid_chars, '', filename)
-
-    if sanitized_filename != filename:
-        logging.info(f"Из названия серии удалены недопустимые символы: '{filename}' -> '{sanitized_filename}'")
-
-    return sanitized_filename
-
 
 def main():
     try:
@@ -93,25 +55,38 @@ def main():
             input(Fore.RED + "Нажмите Enter для выхода..." + Style.RESET_ALL)  # Ожидание ввода перед закрытием
             return
 
-        if not download_video(season, selected_episode['localId'], selected_quality):
-            print(Fore.RED + "Ошибка при скачивании видео." + Style.RESET_ALL)
-            return
+        if config.get('Downloader', 'downloader_type') == 'multithreaded':
+            if not download_video(season, selected_episode['localId'], selected_quality):
+                logging.error(f"Ошибка при скачивании видео")
+                return
 
-        if not download_audio(season, selected_episode['localId'], selected_dub['code']):
-            print(Fore.RED + "Ошибка при скачивании аудио." + Style.RESET_ALL)
-            return
+            if not download_audio(season, selected_episode['localId'], selected_dub['code']):
+                logging.error(f"Ошибка при скачивании аудио")
+                return
 
-        if selected_subs and not download_subs(season, selected_episode['localId'], selected_subs['code']):
-            print(Fore.RED + "Ошибка при скачивании субтитров." + Style.RESET_ALL)
-            return
+            if selected_subs and not download_subs(season, selected_episode['localId'], selected_subs['code']):
+                logging.error(f"Ошибка при скачивании субтитров")
+                return
+        else:
+            if not download_video_alt(season, selected_episode['localId'], selected_quality):
+                logging.error(f"Ошибка при скачивании видео")
+                return
+
+            if not download_audio_alt(season, selected_episode['localId'], selected_dub['code']):
+                logging.error(f"Ошибка при скачивании аудио")
+                return
+
+            if selected_subs and not download_subs_alt(season, selected_episode['localId'], selected_subs['code']):
+                logging.error(f"Ошибка при скачивании субтитров")
+                return
 
         video_filename = os.path.join(TEMP_DIR, "video.mp4") if int(selected_quality) <= 1080 else os.path.join(TEMP_DIR, "video.webm")
         audio_filename = os.path.join(TEMP_DIR, "audio.opus")
         subs_filename = os.path.join(TEMP_DIR, "subs.ass") if selected_subs else None
-        output_filename = os.path.join(OUTPUT_DIR, f"[{selected_episode['categoryId']}] " + f"{selected_episode['localId']} " + f"{sanitized_title}.mkv")
+        output_filename = os.path.join(output_folder, f"[{selected_episode['categoryId']}] {selected_episode['localId']} {sanitized_title}.mkv")
 
         if not merge_video_audio_subs(video_filename, audio_filename, subs_filename, output_filename):
-            print(Fore.RED + "Ошибка при объединении видео." + Style.RESET_ALL)
+            logging.error(f"Ошибка при объединении видео")
             return
 
         cleanup_temp_files()
@@ -122,7 +97,7 @@ def main():
         os.startfile(OUTPUT_DIR)
 
     except Exception as e:
-        logging.error(Fore.RED + f"Произошла ошибка: {e}" + Style.RESET_ALL)
+        logging.error(f"Произошла ошибка: {e}")
     input(Fore.RED + "Нажмите Enter для выхода..." + Style.RESET_ALL)
 
 if __name__ == "__main__":
