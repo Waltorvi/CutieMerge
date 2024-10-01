@@ -10,7 +10,7 @@ OUTPUT_DIR = os.path.join(SCRIPT_DIR, "CutieMerge")
 BASE_URL = "https://база.магиядружбы.рф/"
 
 
-def DownloadFile(url, filename):
+def DownloadFileALT(url, filename):
     """
     Скачивает файл по заданному URL и сохраняет его с указанным именем.
 
@@ -37,7 +37,7 @@ def DownloadFile(url, filename):
         return False
 
 
-def download_video(season, episode, quality):
+def download_video_alt(season, episode, quality):
     if int(quality) <= 1080:
         ext = "mp4"
     else:
@@ -45,18 +45,18 @@ def download_video(season, episode, quality):
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{quality}.{ext}"
     filename = os.path.join(TEMP_DIR, f"video.{ext}")
     logging.info("Скачивание видео")
-    return DownloadFile(url, filename)
+    return DownloadFileALT(url, filename)
 
 
-def download_audio(season, episode, dub_code):
+def download_audio_alt(season, episode, dub_code):
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{dub_code}.opus"
     filename = os.path.join(TEMP_DIR, "audio.opus")
     logging.info("Скачивание аудио")
-    return DownloadFile(url, filename)
+    return DownloadFileALT(url, filename)
 
 
-def download_subs(season, episode, subs_code):
+def download_subs_alt(season, episode, subs_code):
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{subs_code}.ass"
     filename = os.path.join(TEMP_DIR, "subs.ass")
     logging.info("Скачивание субтитров")
-    return DownloadFile(url, filename)
+    return DownloadFileALT(url, filename)
