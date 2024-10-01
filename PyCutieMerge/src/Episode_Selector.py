@@ -176,6 +176,6 @@ class EpisodeSelector:
         confirm = input(Fore.GREEN + "Подтвердить выбор? (да/нет): " + Style.RESET_ALL)
         if confirm.lower() != "да":
             print("Выбор отменен.")
-            return None
+            return()
 
         return season, selected_episode, english_title, selected_quality, selected_dub, selected_subs
