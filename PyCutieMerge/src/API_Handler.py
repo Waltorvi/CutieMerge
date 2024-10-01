@@ -1,6 +1,8 @@
 import requests
 import logging
 
+from Logs import SUCCESS
+
 API_BASE_URL = 'https://магиядружбы.рф/api/v1/episodes'
 BASE_URL = 'https://база.магиядружбы.рф'
 
@@ -8,6 +10,7 @@ class APIHandler:
 
     def check_api_availability(self):
         try:
+            from Config import timeout
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -22,14 +25,15 @@ class APIHandler:
                 'Sec-Fetch-Site': 'none',
                 'Sec-Fetch-User': '?1'
             }
-            response = requests.get(API_BASE_URL, headers=headers)
+            response = requests.get(API_BASE_URL, headers=headers, timeout=timeout)
             response.encoding = 'utf-8'
             logging.info(f"Отправлен запрос: {response.request.url}")
-            logging.info(f"Получен ответ: {response.status_code} {response.reason}")
+            if response.status_code == 200:
+                logging.log(SUCCESS, f"Получен ответ: {response.status_code} - {response.reason}")
             response.raise_for_status()
             return True
         except requests.RequestException as e:
-            logging.error(f"Ошибка при проверке доступности API: {e}")
+            logging.critical(f"Ошибка при проверке доступности API: {e}")
             print(f"API недоступен. Пожалуйста, проверьте ваше интернет-соединение или попробуйте позже.")
             return False
 
