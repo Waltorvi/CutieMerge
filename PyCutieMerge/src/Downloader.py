@@ -1,18 +1,37 @@
 import requests
 import logging
 import os
+import re
+
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 from time import sleep
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_DIR = os.path.join(SCRIPT_DIR, ".temp")
-OUTPUT_DIR = os.path.join(SCRIPT_DIR, "CutieMerge")
 
 BASE_URL = "https://база.магиядружбы.рф/"
 
+def sanitize_filename(filename):
+    """
+    Удаляет недопустимые символы из имени файла.
 
-def DownloadFile(url, filename, max_retries=3, num_threads=4):
+    Args:
+        filename (str): Имя файла.
+
+    Returns:
+        str: Очищенное имя файла.
+    """
+    invalid_chars = r'[\\/:*?"<>|]'  # Запрещенные символы в Windows
+    sanitized_filename = re.sub(invalid_chars, '', filename)
+
+    if sanitized_filename != filename:
+        logging.info(f"Из названия серии удалены недопустимые символы: '{filename}' -> '{sanitized_filename}'")
+
+    return sanitized_filename
+
+
+def DownloadFile(url, filename): # фикс
     """
     Скачивает файл по заданному URL и сохраняет его с указанным именем,
     используя многопоточную загрузку.
@@ -23,13 +42,13 @@ def DownloadFile(url, filename, max_retries=3, num_threads=4):
         num_threads (int, optional): Количество потоков для загрузки. Defaults to 4.
     """
 
-    from Config import max_retries, num_threads
+    from Config import max_retries, num_threads, timeout
 
     try:
         logging.info(f"Максимальное количество повторных попыток при ошибке загрузки: {max_retries}")
         logging.info(f"Число потоков для скачивания: {num_threads}")
         with requests.Session() as session:
-            response = session.head(url)
+            response = session.head(url, timeout=timeout)
             response.raise_for_status()
             file_size = int(response.headers.get('content-length', 0))
 
@@ -52,7 +71,7 @@ def DownloadFile(url, filename, max_retries=3, num_threads=4):
                             f.write(data)
                             start += len(data)
                     except requests.exceptions.RequestException as e:
-                        logging.warning(f"Ошибка при загрузке фрагмента: {e}")
+                        logging.error(f"Ошибка при загрузке фрагмента: {e}")
                         if retry_count < max_retries:
                             logging.info(f"Повторная попытка загрузки фрагмента (попытка {retry_count + 1})...")
                             sleep(1)  # Пауза перед повторной попыткой
@@ -84,19 +103,19 @@ def download_video(season, episode, quality):
         ext = "webm"
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{quality}.{ext}"
     filename = os.path.join(TEMP_DIR, f"video.{ext}")
-    logging.info("Скачивание видео")
+    logging.info("Скачивание видео...")
     return DownloadFile(url, filename)
 
 
 def download_audio(season, episode, dub_code):
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{dub_code}.opus"
     filename = os.path.join(TEMP_DIR, "audio.opus")
-    logging.info("Скачивание аудио")
+    logging.info("Скачивание аудио...")
     return DownloadFile(url, filename)
 
 
 def download_subs(season, episode, subs_code):
     url = f"{BASE_URL}video/G4/FiM/media/s{season}/e{episode}/{subs_code}.ass"
     filename = os.path.join(TEMP_DIR, "subs.ass")
-    logging.info("Скачивание субтитров")
+    logging.info("Скачивание субтитров...")
     return DownloadFile(url, filename)
