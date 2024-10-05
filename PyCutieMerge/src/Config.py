@@ -5,8 +5,14 @@ import logging
 import tkinter as tk
 
 from tkinter import filedialog
+from colorama import init, Fore, Style
 
 from Logs import SUCCESS
+
+init()
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMP_DIR = os.path.join(SCRIPT_DIR, ".temp")
 
 # Объявление глобальных переменных
 max_retries = 3
@@ -15,6 +21,8 @@ downloader_type = 'multithreaded'
 output_folder = os.path.join(os.path.expanduser("~"), "Downloads", "CutieMerge")
 timeout = 10
 open_folder_on_completion = True
+aria2c_command = f"-c --allow-overwrite=true -x {num_threads} -d {TEMP_DIR} -o"
+
 
 # Путь к файлу настроек
 config_file = os.path.join(os.path.dirname(sys.executable), 'config.ini')
@@ -31,9 +39,10 @@ if not os.path.exists(config_file):
         config.add_section('Downloader')
         config.set('Downloader', 'max_retries', '3')
         config.set('Downloader', 'num_threads', '4')
-        config.set('Downloader', 'downloader_type', 'multithreaded')
+        config.set('Downloader', 'downloader_type', 'alternative')
         config.set('Downloader', 'output_folder', output_folder)
         config.set('Downloader', 'timeout', '10')
+        config.set('Downloader', 'aria2c_command', f"-c --allow-overwrite=true -x {num_threads} -d {TEMP_DIR} -o")
         config.write(f)
     logging.info(f"Создан файл настроек: {config_file}")
 
@@ -55,6 +64,7 @@ def show_settings_menu():
     global downloader_type
     global output_folder
     global timeout
+    global aria2c_command
 
     # Получение значений настроек из конфига
     open_folder_on_completion = config.getboolean('Main', 'open_folder_on_completion', fallback=open_folder_on_completion)
@@ -64,15 +74,17 @@ def show_settings_menu():
     downloader_type = config.get('Downloader', 'downloader_type', fallback=downloader_type)
     output_folder = config.get('Downloader', 'output_folder', fallback=os.path.join(os.path.expanduser("~"), "Downloads", "CutieMerge"))
     timeout = config.getint('Downloader', 'timeout', fallback=timeout)
+    aria2c_command = config.get('Downloader', 'aria2c_command', fallback=aria2c_command)
 
     while True:
         print("\nМеню настроек:")
-        print(f"1. Максимальное количество попыток загрузки <{max_retries}>")
-        print(f"2. Количество потоков загрузки <{num_threads}>")
-        print(f"3. Тип загрузчика <{downloader_type}>")
-        print(f"4. Папка вывода <{output_folder}>")
-        print(f"5. Значение таймаута <{timeout}>")
-        print(f"6. Открывать папку по завершению загрузки <{open_folder_on_completion}>")
+        print(f"1. Максимальное количество попыток загрузки =", Style.BRIGHT + Fore.CYAN + f"{max_retries}" + Style.RESET_ALL + " (СКОРО)")
+        print(f"2. Количество потоков загрузки =", Style.BRIGHT + Fore.CYAN + f"{num_threads}" + Style.RESET_ALL)
+        print(f"3. Тип загрузчика =", Style.BRIGHT + Fore.CYAN + f"{downloader_type}" + Style.RESET_ALL)
+        print(f"4. Папка вывода =", Style.BRIGHT + Fore.CYAN + f"{output_folder}" + Style.RESET_ALL)
+        print(f"5. Значение таймаута =", Style.BRIGHT + Fore.CYAN + f"{timeout}" + Style.RESET_ALL + " (СКОРО)")
+        print(f"6. Открывать папку по завершению загрузки =", Style.BRIGHT + Fore.CYAN + f"{open_folder_on_completion}" + Style.RESET_ALL)
+        # Параметры сохранения файла (имя)
         print("7. Сохранить и выйти")
 
         choice = input("Выберите пункт меню: ")
@@ -94,14 +106,20 @@ def show_settings_menu():
 
         elif choice == '3':
             print("Выберите тип загрузчика:")
-            print("1. Многопоточный (multithreaded)")
-            print("2. Альтернативный (alternative)")
+            print("1. Альтернативный")
+            print("2. aria2c - РЕКОМЕНДУЕТСЯ")
+            print("3. wget")
+            print("4. Многопоточный (EXP) - НЕ РЕКОМЕНДУЕТСЯ")
 
             downloader_choice = input("Введите номер: ")
             if downloader_choice == '1':
-                downloader_type = 'multithreaded'
-            elif downloader_choice == '2':
                 downloader_type = 'alternative'
+            elif downloader_choice == '2':
+                downloader_type = 'aria2c'
+            elif downloader_choice == '3':
+                downloader_type = 'wget'
+            elif downloader_choice == '4':
+                downloader_type = 'multithreaded'
             else:
                 print("Неверный выбор.")
 
@@ -166,3 +184,4 @@ def show_settings_menu():
     # Сохранение настроек в файл
     with open(config_file, 'w') as f:
         config.write(f)
+
