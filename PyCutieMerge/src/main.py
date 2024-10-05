@@ -5,14 +5,14 @@ from pathlib import Path
 from colorama import init, Fore, Style
 
 from API_Handler import APIHandler
-from Downloader import download_video, download_audio, download_subs, sanitize_filename
+from Downloader import download_video, download_audio, download_subs, download_file_wget, download_file_aria2c, sanitize_filename
 from ALTDownloader import download_video_alt, download_audio_alt, download_subs_alt
 from Merge import merge_video_audio_subs, cleanup_temp_files
 from Episode_Selector import EpisodeSelector
 from Config import config, output_folder
 from Logs import ColoredConsoleHandler
 
-init()
+init()  # colorama
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DOWNLOADS_DIR = str(Path.home() / "Downloads")
@@ -37,7 +37,15 @@ def main():
             Fore.MAGENTA + "Сделано " + Fore.CYAN + "Waltorvi" + Fore.MAGENTA + " для " + Fore.WHITE + "МагияДружбы.рф" + Style.RESET_ALL)
 
         print(Fore.MAGENTA + "\nДоступные команды:" + Style.RESET_ALL)
-        print(Fore.MAGENTA + "- /settings - меню настроек\n" + Style.RESET_ALL)
+        print(Fore.MAGENTA + "- /settings - меню настроек" + Style.RESET_ALL)
+        if config.get('Downloader', 'downloader_type') == 'aria2c':
+            print(Fore.MAGENTA + "- /aria2c - настройка команды aria2c (СКОРО)" + Style.RESET_ALL)
+        if config.get('Downloader', 'downloader_type') == 'wget':
+            print(Fore.MAGENTA + "- /wget - настройка команды wget (СКОРО)" + Style.RESET_ALL)
+        print(Fore.MAGENTA + "- /defaults - выбор значений серии по умолчанию (СКОРО)" + Style.RESET_ALL)
+        print(Fore.MAGENTA + "- /help - меню помощи (СКОРО)\n" + Style.RESET_ALL)
+
+
 
         ColoredConsoleHandler()
 
@@ -57,28 +65,67 @@ def main():
 
         if config.get('Downloader', 'downloader_type') == 'multithreaded':
             if not download_video(season, selected_episode['localId'], selected_quality):
-                logging.error(f"Ошибка при скачивании видео")
+                logging.error(f"Ошибка при скачивании видео.")
                 return
 
             if not download_audio(season, selected_episode['localId'], selected_dub['code']):
-                logging.error(f"Ошибка при скачивании аудио")
+                logging.error(f"Ошибка при скачивании аудио.")
                 return
 
             if selected_subs and not download_subs(season, selected_episode['localId'], selected_subs['code']):
-                logging.error(f"Ошибка при скачивании субтитров")
+                logging.error(f"Ошибка при скачивании субтитров.")
                 return
-        else:
+        elif config.get('Downloader', 'downloader_type') == 'alternative':
             if not download_video_alt(season, selected_episode['localId'], selected_quality):
-                logging.error(f"Ошибка при скачивании видео")
+                logging.error(f"Ошибка при скачивании видео.")
                 return
 
             if not download_audio_alt(season, selected_episode['localId'], selected_dub['code']):
-                logging.error(f"Ошибка при скачивании аудио")
+                logging.error(f"Ошибка при скачивании аудио.")
                 return
 
             if selected_subs and not download_subs_alt(season, selected_episode['localId'], selected_subs['code']):
-                logging.error(f"Ошибка при скачивании субтитров")
+                logging.error(f"Ошибка при скачивании субтитров.")
                 return
+        elif config.get('Downloader', 'downloader_type') == 'wget':
+            if not download_file_wget(
+                    f"https://xn--80aabz.xn--80acfekkz0b1a6ftb.xn--p1ai/video/G4/FiM/media/s{season}/e{selected_episode['localId']}/{selected_quality}.webm",
+                    os.path.join(TEMP_DIR, f"video.webm")):
+                logging.error(f"Ошибка при скачивании видео.")
+                return
+
+            if not download_file_wget(
+                    f"https://xn--80aabz.xn--80acfekkz0b1a6ftb.xn--p1ai/video/G4/FiM/media/s{season}/e{selected_episode['localId']}/{selected_dub['code']}.opus",
+                    os.path.join(TEMP_DIR, f"audio.opus")):
+                logging.error(f"Ошибка при скачивании аудио.")
+                return
+
+            if selected_subs and not download_file_wget(
+                    f"https://xn--80aabz.xn--80acfekkz0b1a6ftb.xn--p1ai/video/G4/FiM/media/s{season}/e{selected_episode['localId']}/{selected_subs['code']}.ass",
+                    os.path.join(TEMP_DIR, f"subs.ass")):
+                logging.error(f"Ошибка при скачивании субтитров.")
+                return
+        elif config.get('Downloader', 'downloader_type') == 'aria2c':
+            if not download_file_aria2c(
+                    f"https://xn--80aabz.xn--80acfekkz0b1a6ftb.xn--p1ai/video/G4/FiM/media/s{season}/e{selected_episode['localId']}/{selected_quality}.webm",
+                    os.path.join(TEMP_DIR, f"video.webm")):
+                logging.error(f"Ошибка при скачивании видео.")
+                return
+
+            if not download_file_aria2c(
+                    f"https://xn--80aabz.xn--80acfekkz0b1a6ftb.xn--p1ai/video/G4/FiM/media/s{season}/e{selected_episode['localId']}/{selected_dub['code']}.opus",
+                    os.path.join(TEMP_DIR, f"audio.opus")):
+                logging.error(f"Ошибка при скачивании аудио.")
+                return
+
+            if selected_subs and not download_file_aria2c(
+                    f"https://xn--80aabz.xn--80acfekkz0b1a6ftb.xn--p1ai/video/G4/FiM/media/s{season}/e{selected_episode['localId']}/{selected_subs['code']}.ass",
+                    os.path.join(TEMP_DIR, f"subs.ass")):
+                logging.error(f"Ошибка при скачивании субтитров.")
+                return
+        else:
+            logging.error(f"Неизвестный тип загрузчика: {config.get('Downloader', 'downloader_type')}")
+            return
 
         video_filename = os.path.join(TEMP_DIR, "video.mp4") if int(selected_quality) <= 1080 else os.path.join(TEMP_DIR, "video.webm")
         audio_filename = os.path.join(TEMP_DIR, "audio.opus")
