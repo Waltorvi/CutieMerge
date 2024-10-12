@@ -2,12 +2,13 @@ import logging
 
 from colorama import init, Fore, Style
 
-from Config import show_settings_menu
+from Config import config, show_settings_menu
 from Commands import set_aria2c_command
 
 class EpisodeSelector:
-    def __init__(self, api):
-        self.api = api
+    def __init__(self, to_api, tdt_api):
+        self.api = to_api
+        self.tdt_api = tdt_api
 
     def select_episode(self):
         # Выбор сезона
@@ -156,12 +157,20 @@ class EpisodeSelector:
                 return None
 
         # Выбор субтитров
+        other_subs = sorted(episode_extras['subs'], key=lambda x: x['name'])
+
+        if config.getboolean('ApiHandler', 'tdt_sub'):
+            tdt_sub = self.tdt_api.get_sub(season, selected_episode['localId'], 'Rus')
+            if tdt_sub:
+                logging.info(f"Субтитры с сайта TDT для серии [{selected_episode['categoryId']}] {selected_episode['localId']} '{selected_episode['title']}' найдены!")
+                other_subs = [sub for sub in other_subs if sub.get('name') != 'TheDoctor Team']
+                other_subs.insert(0, tdt_sub)
+
         print(Fore.WHITE + "\nДоступные субтитры:" + Style.RESET_ALL)
         print("1. Без субтитров")
 
-        other_subs = sorted(episode_extras['subs'], key=lambda x: x['name'])
         for i, sub in enumerate(other_subs):
-            print(f"{i + 2}. [{sub['lang']}] {sub['name']}")
+            print(f"{i + 2}. [{sub.get('lang', 'N/A')}] {sub['name']}")
 
         selected_subs_index = int(input(Fore.GREEN + "Выберите субтитры (номер): " + Style.RESET_ALL)) - 1
         if selected_subs_index == 0:
