@@ -21,7 +21,9 @@ downloader_type = 'multithreaded'
 output_folder = os.path.join(os.path.expanduser("~"), "Downloads", "CutieMerge")
 timeout = 10
 open_folder_on_completion = True
+tdt_sub = False
 aria2c_command = f"-c --allow-overwrite=true -x {num_threads} -d {TEMP_DIR} -o"
+delete_temp_files = True
 
 
 # Путь к файлу настроек
@@ -36,6 +38,9 @@ if not os.path.exists(config_file):
     with open(config_file, 'w') as f:
         config.add_section('Main')
         config.set('Main', 'open_folder_on_completion', 'True')
+        config.set('Main', 'delete_temp_files', 'True')
+        config.add_section('ApiHandler')
+        config.set('ApiHandler', 'tdt_sub', 'False')
         config.add_section('Downloader')
         config.set('Downloader', 'max_retries', '3')
         config.set('Downloader', 'num_threads', '4')
@@ -57,8 +62,14 @@ def show_settings_menu():
     """Отображает меню настроек в консоли."""
     logging.info(f"Файл конфигурации: {config_file}")
 
+    # Main
     global open_folder_on_completion
+    global delete_temp_files
 
+    # ApiHandler
+    global tdt_sub
+
+    # Downloader
     global max_retries
     global num_threads
     global downloader_type
@@ -67,25 +78,33 @@ def show_settings_menu():
     global aria2c_command
 
     # Получение значений настроек из конфига
+    # Main
     open_folder_on_completion = config.getboolean('Main', 'open_folder_on_completion', fallback=open_folder_on_completion)
+    delete_temp_files = config.getboolean('Main', 'delete_temp_files', fallback=delete_temp_files)
 
+    # ApiHandler
+    tdt_sub = config.getboolean('Main', 'tdt_sub', fallback=tdt_sub)
+
+    # Downloader
     max_retries = config.getint('Downloader', 'max_retries', fallback=max_retries)
     num_threads = config.getint('Downloader', 'num_threads', fallback=num_threads)
     downloader_type = config.get('Downloader', 'downloader_type', fallback=downloader_type)
-    output_folder = config.get('Downloader', 'output_folder', fallback=os.path.join(os.path.expanduser("~"), "Downloads", "CutieMerge"))
+    output_folder = config.get('Downloader', 'output_folder', fallback=output_folder)
     timeout = config.getint('Downloader', 'timeout', fallback=timeout)
     aria2c_command = config.get('Downloader', 'aria2c_command', fallback=aria2c_command)
 
     while True:
         print("\nМеню настроек:")
-        print(f"1. Максимальное количество попыток загрузки =", Style.BRIGHT + Fore.CYAN + f"{max_retries}" + Style.RESET_ALL + " (СКОРО)")
+        print(f"1. Максимальное количество попыток загрузки =", Style.BRIGHT + Fore.CYAN + f"{max_retries}" + Style.RESET_ALL)
         print(f"2. Количество потоков загрузки =", Style.BRIGHT + Fore.CYAN + f"{num_threads}" + Style.RESET_ALL)
         print(f"3. Тип загрузчика =", Style.BRIGHT + Fore.CYAN + f"{downloader_type}" + Style.RESET_ALL)
         print(f"4. Папка вывода =", Style.BRIGHT + Fore.CYAN + f"{output_folder}" + Style.RESET_ALL)
-        print(f"5. Значение таймаута =", Style.BRIGHT + Fore.CYAN + f"{timeout}" + Style.RESET_ALL + " (СКОРО)")
+        print(f"5. Значение таймаута =", Style.BRIGHT + Fore.CYAN + f"{timeout}" + Style.RESET_ALL)
         print(f"6. Открывать папку по завершению загрузки =", Style.BRIGHT + Fore.CYAN + f"{open_folder_on_completion}" + Style.RESET_ALL)
+        print(f"7. Загружать субтитры команды TheDoctorTeam с их сайта =" , Style.BRIGHT + Fore.CYAN + f"{tdt_sub}" + Style.RESET_ALL)
+        print(f"8. Удаление временных файлов =", Style.BRIGHT + Fore.CYAN + f"{delete_temp_files}" + Style.RESET_ALL)
         # Параметры сохранения файла (имя)
-        print("7. Сохранить и выйти")
+        print("9. Сохранить и выйти")
 
         choice = input("Выберите пункт меню: ")
 
@@ -175,6 +194,39 @@ def show_settings_menu():
             logging.info(f"Настройка 'Открывать папку по завершению' установлена в: {open_folder_on_completion}")
 
         elif choice == '7':
+            print("Скачивать субтитры команды TDT с их сайта?")
+            print("1. Да")
+            print("2. Нет")
+
+            tdt_sub_choice = input("Введите номер: ")
+
+            if tdt_sub_choice == '1':
+                tdt_sub = True
+            elif tdt_sub_choice == '2':
+                tdt_sub = False
+            else:
+                print("Неверный выбор")
+                continue
+
+            config.set('ApiHandler', 'tdt_sub', str(tdt_sub))
+            logging.info(f"Настройка 'Субтитры с сайта TDT' установлена в: {tdt_sub}")
+
+        elif choice == '8':
+            print("Удалять временные файлы после объединения?")
+            print("1. Да")
+            print("2. Нет")
+
+            dtmp = input("Введите номер: ")
+
+            if dtmp == '1':
+                delete_temp_files = True
+            elif dtmp == '2':
+                delete_temp_files = False
+
+            config.set('Main', 'delete_temp_files', str(delete_temp_files))
+            logging.info(f"Настройка 'Удалять временные файлы' установлена в: {delete_temp_files}")
+
+        elif choice == '9':
             logging.info(f"Пользователь завершил настройку.")
             logging.log(SUCCESS, f"Настройки успешно сохранены")
             break
