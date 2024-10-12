@@ -9,6 +9,7 @@ import threading
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
+from Config import config
 from Logs import SUCCESS
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,6 +18,7 @@ TEMP_DIR = os.path.join(SCRIPT_DIR, ".temp")
 BASE_URL = "https://база.магиядружбы.рф/"
 
 chunk_lock = threading.Lock()
+
 
 def DownloadFile(url, filename):
     """
@@ -28,7 +30,10 @@ def DownloadFile(url, filename):
         filename (str): Имя файла для сохранения.
     """
     try:
-        from Config import max_retries, num_threads, timeout, downloader_type
+        max_retries = config.getint('Downloader', 'max_retries')
+        num_threads = config.getint('Downloader', 'num_threads')
+        downloader_type = config.get('Downloader', 'downloader_type')
+        timeout = config.getint('Downloader', 'timeout')
 
         logging.info(f"Запуск загрузки файла: {filename}")
         logging.info(f"URL: {url}")
@@ -116,27 +121,36 @@ def DownloadFile(url, filename):
 
 def download_file_wget(url, filename):
     """Скачивает файл с помощью wget"""
+    output_filename = None
     try:
-        logging.info(f"Скачивание файла '{filename}' с помощью wget2...")
+        ext = os.path.splitext(url)[1]
+        output_filename = os.path.splitext(filename)[0] + ext
+        max_retries = config.getint('Downloader', 'max_retries')
+        logging.info(f"Скачивание файла '{output_filename}' с помощью wget2...")
         command = [
             "wget",
-            "-O", filename,
+            "-t", max_retries,
+            "-O", output_filename,
             url
         ]
         logging.info(f"Команда wget2: {command}")
         subprocess.run(" ".join(command), check=True, cwd=TEMP_DIR)
-        logging.log(SUCCESS, f"Файл '{filename}' успешно скачан с помощью wget2.")
+        logging.log(SUCCESS, f"Файл '{output_filename}' успешно скачан с помощью wget2.")
         return True
     except subprocess.CalledProcessError as e:
-        logging.error(f"Ошибка при скачивании файла '{filename}' с помощью wget2: {e}")
+        logging.error(f"Ошибка при скачивании файла '{output_filename}' с помощью wget2: {e}")
         return False
 
 
 def download_file_aria2c(url, filename):
     """Скачивает файл с помощью aria2c."""
+    output_filename = None
     try:
-        from Config import num_threads, aria2c_command
-        logging.info(f"Скачивание файла '{filename}' с помощью aria2c...")
+        ext = os.path.splitext(url)[1]
+        output_filename = os.path.splitext(filename)[0] + ext
+        num_threads = config.getint('Downloader', 'num_threads')
+        # aria2c_command = config.get('Downloader', 'aria2c_command')
+        logging.info(f"Скачивание файла '{output_filename}' с помощью aria2c...")
         logging.info(f"URL: {url}")
         command = [
                 "aria2c",
@@ -144,15 +158,15 @@ def download_file_aria2c(url, filename):
                 "--allow-overwrite=true",
                 "-x", str(num_threads),
                 "-d", TEMP_DIR,
-                "-o", os.path.basename(filename),
+                "-o", os.path.basename(output_filename),
                 url
         ]
         logging.info(f"Команда aria2c: {command}")
         subprocess.run(command, check=True)
-        logging.log(SUCCESS, f"Файл '{filename}' успешно скачан с помощью aria2c.")
+        logging.log(SUCCESS, f"Файл '{output_filename}' успешно скачан с помощью aria2c.")
         return True
     except subprocess.CalledProcessError as e:
-        logging.error(f"Ошибка при скачивании файла '{filename}' с помощью aria2c: {e}")
+        logging.error(f"Ошибка при скачивании файла '{output_filename}' с помощью aria2c: {e}")
         return False
 
 
