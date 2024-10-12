@@ -46,6 +46,7 @@ def merge_video_audio_subs(video_filename, audio_filename, subs_filename=None, o
 
     except subprocess.CalledProcessError as e:
         logging.error(f"Ошибка при объединении видео: {e}")
+        input('Нажмите Enter для выхода...')
         return False
 
 
